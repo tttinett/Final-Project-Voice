@@ -1,0 +1,666 @@
+/* ────────────────────────────────────────────────────────────
+   NOTE: Google Fonts is loaded via <link> in layout.tsx
+──────────────────────────────────────────────────────────── */
+
+/* ────────────────────────────────────────────────────────────
+   Root & Page Shell
+──────────────────────────────────────────────────────────── */
+.root {
+    min-height: 100vh;
+    background: #0c0c0f;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+    position: relative;
+    overflow-x: hidden;
+    padding: 2rem 1rem 5rem;
+}
+
+/* ── ambient blobs ── */
+.blob1,
+.blob2,
+.blob3 {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.blob1 {
+    width: 520px;
+    height: 520px;
+    top: -100px;
+    left: -120px;
+    background: radial-gradient(circle, rgba(251, 146, 60, .22) 0%, transparent 70%);
+    animation: blobFloat 9s ease-in-out infinite alternate;
+}
+
+.blob2 {
+    width: 420px;
+    height: 420px;
+    bottom: -80px;
+    right: -100px;
+    background: radial-gradient(circle, rgba(239, 68, 68, .18) 0%, transparent 70%);
+    animation: blobFloat 11s ease-in-out infinite alternate-reverse;
+}
+
+.blob3 {
+    width: 300px;
+    height: 300px;
+    top: 45%;
+    left: 60%;
+    background: radial-gradient(circle, rgba(251, 191, 36, .10) 0%, transparent 70%);
+    animation: blobFloat 13s ease-in-out infinite alternate;
+}
+
+@keyframes blobFloat {
+    to {
+        transform: translate(40px, 30px) scale(1.08);
+    }
+}
+
+.page {
+    width: 100%;
+    max-width: 680px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Hero
+──────────────────────────────────────────────────────────── */
+.hero {
+    text-align: center;
+    padding: 2rem 0 0.5rem;
+}
+
+.heroEmoji {
+    display: block;
+    font-size: 3.8rem;
+    filter: drop-shadow(0 0 20px rgba(251, 146, 60, .65));
+    animation: emojiFloat 3.5s ease-in-out infinite;
+    margin-bottom: .6rem;
+}
+
+@keyframes emojiFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.heroTitle {
+    font-size: clamp(1.9rem, 5vw, 2.8rem);
+    font-weight: 800;
+    background: linear-gradient(120deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 .4rem;
+    letter-spacing: -.5px;
+    line-height: 1.15;
+}
+
+.heroSub {
+    color: rgba(255, 255, 255, .40);
+    font-size: .95rem;
+    margin: 0;
+    font-weight: 400;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Mic Card
+──────────────────────────────────────────────────────────── */
+.micCard {
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 28px;
+    padding: 2.4rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    backdrop-filter: blur(24px);
+    box-shadow: 0 8px 48px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+/* ── status pill ── */
+.pill {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .38rem 1.1rem;
+    border-radius: 999px;
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    border: 1px solid rgba(255, 255, 255, .10);
+    background: rgba(255, 255, 255, .06);
+    color: rgba(255, 255, 255, .55);
+    transition: background .3s, color .3s, border-color .3s;
+}
+
+.pill_listening {
+    background: rgba(251, 146, 60, .18);
+    color: #fdba74;
+    border-color: rgba(251, 146, 60, .35);
+}
+
+.pill_processing {
+    background: rgba(251, 191, 36, .15);
+    color: #fcd34d;
+    border-color: rgba(251, 191, 36, .30);
+}
+
+.pill_done {
+    background: rgba(34, 197, 94, .15);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, .30);
+}
+
+.pill_error {
+    background: rgba(239, 68, 68, .18);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, .35);
+}
+
+.pillDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .3);
+    flex-shrink: 0;
+}
+
+.pillDotActive {
+    background: #f97316;
+    animation: dotPulse 1s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: .5;
+        transform: scale(.7);
+    }
+}
+
+/* ── mic wrap + ripple rings ── */
+.micWrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.micWrap::before,
+.micWrap::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: border-color .3s;
+}
+
+.micWrap::before {
+    inset: -16px;
+}
+
+.micWrap::after {
+    inset: -32px;
+}
+
+.micWrapActive::before {
+    border-color: rgba(249, 115, 22, .35);
+    animation: ripple 1.4s ease-out infinite;
+}
+
+.micWrapActive::after {
+    border-color: rgba(249, 115, 22, .20);
+    animation: ripple 1.4s ease-out .35s infinite;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.25);
+        opacity: 0;
+    }
+}
+
+/* ── mic button ── */
+.micBtn {
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(145deg, #f97316, #dc2626);
+    box-shadow: 0 6px 30px rgba(249, 115, 22, .50), inset 0 1px 0 rgba(255, 255, 255, .2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .18s, box-shadow .2s;
+    position: relative;
+    z-index: 1;
+}
+
+.micBtn:hover {
+    transform: scale(1.07);
+    box-shadow: 0 10px 38px rgba(249, 115, 22, .65), inset 0 1px 0 rgba(255, 255, 255, .2);
+}
+
+.micBtn:active {
+    transform: scale(.95);
+}
+
+.micBtnOn {
+    background: linear-gradient(145deg, #ec4899, #dc2626);
+    animation: micPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 6px 30px rgba(236, 72, 153, .5), inset 0 1px 0 rgba(255, 255, 255, .2);
+    }
+
+    50% {
+        box-shadow: 0 6px 50px rgba(236, 72, 153, .8), inset 0 1px 0 rgba(255, 255, 255, .2);
+    }
+}
+
+.micIcon {
+    font-size: 2.6rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .3));
+    line-height: 1;
+}
+
+/* spinner */
+.spinner {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 255, 255, .25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* interim text */
+.interim {
+    font-size: .95rem;
+    color: rgba(255, 255, 255, .50);
+    font-style: italic;
+    text-align: center;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 12px;
+    padding: .55rem 1.2rem;
+    margin: 0;
+    max-width: 100%;
+}
+
+.cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: #f97316;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink .9s step-end infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* control buttons */
+.btnRow {
+    display: flex;
+    gap: .75rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .6rem 1.6rem;
+    border-radius: 999px;
+    border: none;
+    font-family: inherit;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .2s, opacity .2s;
+    letter-spacing: .02em;
+}
+
+.btn:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn:not(:disabled):hover {
+    transform: translateY(-2px);
+}
+
+.btn:not(:disabled):active {
+    transform: translateY(0);
+}
+
+.btnGreen {
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, .35);
+}
+
+.btnGreen:not(:disabled):hover {
+    box-shadow: 0 6px 22px rgba(34, 197, 94, .5);
+}
+
+.btnRed {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, .35);
+}
+
+.btnRed:not(:disabled):hover {
+    box-shadow: 0 6px 22px rgba(239, 68, 68, .5);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Result Area
+──────────────────────────────────────────────────────────── */
+.resultArea {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeUp .4s ease-out;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* glass card */
+.glassCard {
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 18px;
+    padding: 1.2rem 1.5rem;
+    backdrop-filter: blur(16px);
+}
+
+.glassCardErr {
+    background: rgba(239, 68, 68, .10);
+    border-color: rgba(239, 68, 68, .25);
+}
+
+.glassLabel {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: rgba(255, 255, 255, .35);
+    margin: 0 0 .5rem;
+}
+
+.glassValue {
+    color: rgba(255, 255, 255, .82);
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ── recipe card ── */
+.recipeCard {
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(251, 146, 60, .22);
+    box-shadow: 0 12px 56px rgba(0, 0, 0, .45), 0 0 0 1px rgba(251, 146, 60, .08);
+    background: rgba(15, 12, 8, .85);
+    backdrop-filter: blur(24px);
+}
+
+.recipeBanner {
+    background: linear-gradient(135deg, rgba(251, 146, 60, .18) 0%, rgba(239, 68, 68, .14) 100%);
+    border-bottom: 1px solid rgba(251, 146, 60, .18);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.recipeBannerIcon {
+    font-size: 2.2rem;
+    filter: drop-shadow(0 0 12px rgba(251, 146, 60, .6));
+    flex-shrink: 0;
+}
+
+.recipeName {
+    font-size: clamp(1.3rem, 4vw, 1.75rem);
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(90deg, #fbbf24, #fb923c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.recipeBody {
+    padding: 1.6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.recipeSection {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+}
+
+.sectionTitle {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .10em;
+    color: rgba(251, 191, 36, .65);
+    margin: 0;
+}
+
+/* ingredient tags */
+.tagGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+}
+
+.tag {
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: 999px;
+    padding: .3rem .85rem;
+    font-size: .85rem;
+    color: rgba(255, 255, 255, .78);
+    line-height: 1.4;
+    transition: background .2s, border-color .2s;
+}
+
+.tag:hover {
+    background: rgba(251, 146, 60, .15);
+    border-color: rgba(251, 146, 60, .3);
+}
+
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .08), transparent);
+}
+
+/* steps */
+.stepList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+}
+
+.stepItem {
+    display: flex;
+    align-items: flex-start;
+    gap: .8rem;
+}
+
+.stepNum {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f97316, #dc2626);
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(249, 115, 22, .4);
+    margin-top: 1px;
+}
+
+.stepText {
+    color: rgba(255, 255, 255, .78);
+    font-size: .93rem;
+    line-height: 1.6;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Hints
+──────────────────────────────────────────────────────────── */
+.hints {
+    text-align: center;
+    animation: fadeUp .5s ease-out;
+}
+
+.hintsLabel {
+    color: rgba(255, 255, 255, .30);
+    font-size: .82rem;
+    margin: 0 0 .7rem;
+}
+
+.hintRow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .45rem;
+}
+
+.hintChip {
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 999px;
+    padding: .3rem .9rem;
+    font-size: .83rem;
+    color: rgba(255, 255, 255, .40);
+    cursor: default;
+    transition: background .2s, color .2s, border-color .2s;
+}
+
+.hintChip:hover {
+    background: rgba(251, 146, 60, .14);
+    color: rgba(251, 191, 36, .85);
+    border-color: rgba(251, 146, 60, .28);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Footer
+──────────────────────────────────────────────────────────── */
+.footer {
+    text-align: center;
+    color: rgba(255, 255, 255, .18);
+    font-size: .75rem;
+    padding-top: .5rem;
+    letter-spacing: .04em;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Responsive
+──────────────────────────────────────────────────────────── */
+@media (max-width: 520px) {
+    .micCard {
+        padding: 1.8rem 1.2rem;
+    }
+
+    .micBtn {
+        width: 92px;
+        height: 92px;
+    }
+
+    .micIcon {
+        font-size: 2.1rem;
+    }
+
+    .recipeBanner {
+        padding: 1.2rem 1.4rem;
+    }
+
+    .recipeBody {
+        padding: 1.2rem 1.4rem;
+    }
+
+    .recipeName {
+        font-size: 1.25rem;
+    }
+
+    .btnRow {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn {
+        justify-content: center;
+    }
+}

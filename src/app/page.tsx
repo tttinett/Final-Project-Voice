@@ -1,67 +1,79 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import styles from "./page.module.css";
+
+type RecipeAnswer = {
+  name?: string;
+  ingredients?: string[];
+  steps?: string[];
+};
 
 type ApiResult = {
   transcript?: string;
-  answer?: string;
-  matches?: Array<any>;
+  answer?: RecipeAnswer;
   error?: string;
 };
 
-export default function Home() {
-  const [isListening, setIsListening] = useState(false);
-  const [status, setStatus] = useState("พร้อมพูด");
-  const [result, setResult] = useState<ApiResult>({});
+type AppStatus = "idle" | "listening" | "processing" | "done" | "error";
 
+const EXAMPLE_MENUS = ["ไข่เจียว", "ผัดกะเพรา", "ต้มยำกุ้ง", "แกงเขียวหวาน", "ข้าวผัด", "ส้มตำ"];
+
+export default function Home() {
+  const [status, setStatus] = useState<AppStatus>("idle");
+  const [result, setResult] = useState<ApiResult>({});
+  const [interimText, setInterimText] = useState("");
+  const [pulseActive, setPulseActive] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    // รองรับ Chrome: webkitSpeechRecognition
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SR =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-      setStatus("เบราว์เซอร์นี้ไม่รองรับ Web Speech API (แนะนำ Chrome เท่านั้น)");
+    if (!SR) {
+      setStatus("error");
+      setResult({ error: "เบราว์เซอร์นี้ไม่รองรับ Web Speech API (แนะนำ Chrome)" });
       return;
     }
 
-    const rec = new SpeechRecognition();
+    const rec = new SR();
     rec.lang = "th-TH";
-    rec.interimResults = false; // เอาเฉพาะผลสุดท้าย
+    rec.interimResults = true;
     rec.maxAlternatives = 1;
+    rec.continuous = false;
 
-    rec.onstart = () => {
-      setIsListening(true);
-      setStatus("กำลังฟัง... พูดคำถามได้เลย");
-    };
-
-    rec.onend = () => {
-      setIsListening(false);
-      setStatus("หยุดฟังแล้ว");
-    };
-
+    rec.onstart = () => { setStatus("listening"); setPulseActive(true); };
+    rec.onend = () => setPulseActive(false);
     rec.onerror = (e: any) => {
-      setIsListening(false);
-      setStatus(`เกิดข้อผิดพลาด: ${e?.error || "unknown"}`);
-      setResult({ error: e?.error || "speech error" });
+      setPulseActive(false);
+      setStatus("error");
+      setResult({ error: `เกิดข้อผิดพลาด: ${e?.error || "speech error"}` });
     };
 
     rec.onresult = async (event: any) => {
-      const transcript = event.results?.[0]?.[0]?.transcript || "";
-      setStatus("ได้ข้อความแล้ว กำลังส่งไปถามระบบ...");
-      setResult({ transcript });
+      let interim = "";
+      let final = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        event.results[i].isFinal
+          ? (final += event.results[i][0].transcript)
+          : (interim += event.results[i][0].transcript);
+      }
+      if (interim) setInterimText(interim);
+      if (!final) return;
 
-      // ส่ง transcript ไป server (ไม่ส่งไฟล์เสียงแล้ว)
+      setInterimText("");
+      setStatus("processing");
+      setResult({ transcript: final });
+
       const resp = await fetch("/api/voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: transcript }),
+        body: JSON.stringify({ text: final }),
       });
-
       const data: ApiResult = await resp.json();
       setResult(data);
-      setStatus(data.error ? "เกิดข้อผิดพลาด" : "เสร็จสิ้น");
+      setStatus(data.error ? "error" : "done");
     };
 
     recognitionRef.current = rec;
@@ -69,49 +81,164 @@ export default function Home() {
 
   function start() {
     setResult({});
-    try {
-      recognitionRef.current?.start();
-    } catch {
-      // บางครั้ง start ซ้ำเร็วเกิน จะ throw
-    }
+    setInterimText("");
+    setStatus("idle");
+    try { recognitionRef.current?.start(); } catch { /* already started */ }
   }
 
   function stop() {
     recognitionRef.current?.stop();
+    setStatus("idle");
+    setPulseActive(false);
   }
 
+  const isListening = status === "listening";
+  const isProcessing = status === "processing";
+
   return (
-    <main className="min-h-screen p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold">IT Shop Voice Q&A (Web Speech)</h1>
-      <p className="text-sm opacity-80 mt-2">
-        กดเริ่มแล้วพูด เช่น “มี SSD 1TB ไหม ราคาเท่าไหร่”
-      </p>
+    <div className={styles.root}>
+      {/* ambient blobs */}
+      <div className={styles.blob1} />
+      <div className={styles.blob2} />
+      <div className={styles.blob3} />
 
-      <div className="mt-6 flex gap-3">
-        {!isListening ? (
-          <button className="px-4 py-2 rounded bg-black text-white" onClick={start}>
-            เริ่มพูด
-          </button>
-        ) : (
-          <button className="px-4 py-2 rounded bg-red-600 text-white" onClick={stop}>
-            หยุด
-          </button>
+      <div className={styles.page}>
+
+        {/* ── HERO ─────────────────────────────────────────── */}
+        <header className={styles.hero}>
+          <span className={styles.heroEmoji}>🍽️</span>
+          <h1 className={styles.heroTitle}>AI Cooking Assistant</h1>
+          <p className={styles.heroSub}>พูดชื่ออาหาร รับสูตรทันที</p>
+        </header>
+
+        {/* ── MIC CARD ─────────────────────────────────────── */}
+        <section className={styles.micCard}>
+          {/* status pill */}
+          <div className={`${styles.pill} ${styles[`pill_${status}`]}`}>
+            <span className={`${styles.pillDot} ${isListening ? styles.pillDotActive : ""}`} />
+            {status === "idle" && "พร้อมรับคำสั่ง"}
+            {status === "listening" && "กำลังฟัง..."}
+            {status === "processing" && "กำลังค้นหาสูตร..."}
+            {status === "done" && "พบสูตรอาหารแล้ว ✨"}
+            {status === "error" && "เกิดข้อผิดพลาด"}
+          </div>
+
+          {/* big mic button */}
+          <div className={`${styles.micWrap} ${pulseActive ? styles.micWrapActive : ""}`}>
+            <button
+              id="btn-mic"
+              className={`${styles.micBtn} ${isListening ? styles.micBtnOn : ""}`}
+              onClick={isListening ? stop : start}
+              aria-label={isListening ? "หยุดพูด" : "เริ่มพูด"}
+            >
+              {isProcessing
+                ? <span className={styles.spinner} />
+                : <span className={styles.micIcon}>{isListening ? "⏹" : "🎤"}</span>
+              }
+            </button>
+          </div>
+
+          {/* interim text */}
+          {interimText && (
+            <p className={styles.interim}>
+              &ldquo;{interimText}<span className={styles.cursor} />&rdquo;
+            </p>
+          )}
+
+          {/* control buttons */}
+          <div className={styles.btnRow}>
+            <button id="btn-start" className={`${styles.btn} ${styles.btnGreen}`} onClick={start} disabled={isListening}>
+              <span>🎤</span> เริ่มพูด
+            </button>
+            <button id="btn-stop" className={`${styles.btn} ${styles.btnRed}`} onClick={stop} disabled={!isListening && !isProcessing}>
+              <span>⏹</span> หยุด
+            </button>
+          </div>
+        </section>
+
+        {/* ── RESULT ───────────────────────────────────────── */}
+        {(result.transcript || result.answer || result.error) && (
+          <section className={styles.resultArea}>
+
+            {/* what user said */}
+            {result.transcript && (
+              <div className={styles.glassCard} id="card-transcript">
+                <p className={styles.glassLabel}>� ที่คุณพูด</p>
+                <p className={styles.glassValue}>&ldquo;{result.transcript}&rdquo;</p>
+              </div>
+            )}
+
+            {/* error */}
+            {result.error && (
+              <div className={`${styles.glassCard} ${styles.glassCardErr}`} id="card-error">
+                <p className={styles.glassLabel}>⚠️ ข้อผิดพลาด</p>
+                <p className={styles.glassValue}>{result.error}</p>
+              </div>
+            )}
+
+            {/* recipe */}
+            {result.answer && !result.error && (
+              <div className={styles.recipeCard} id="card-recipe">
+
+                {/* name banner */}
+                <div className={styles.recipeBanner}>
+                  <span className={styles.recipeBannerIcon}>🍳</span>
+                  <h2 className={styles.recipeName}>{result.answer.name}</h2>
+                </div>
+
+                <div className={styles.recipeBody}>
+                  {/* ingredients */}
+                  {result.answer.ingredients && result.answer.ingredients.length > 0 && (
+                    <div className={styles.recipeSection}>
+                      <h3 className={styles.sectionTitle}>🧺 วัตถุดิบ</h3>
+                      <div className={styles.tagGrid}>
+                        {result.answer.ingredients.map((item, i) => (
+                          <span key={i} className={styles.tag}>{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* divider */}
+                  {result.answer.ingredients?.length && result.answer.steps?.length
+                    ? <div className={styles.divider} /> : null}
+
+                  {/* steps */}
+                  {result.answer.steps && result.answer.steps.length > 0 && (
+                    <div className={styles.recipeSection}>
+                      <h3 className={styles.sectionTitle}>📋 วิธีทำ</h3>
+                      <ol className={styles.stepList}>
+                        {result.answer.steps.map((step, i) => (
+                          <li key={i} className={styles.stepItem}>
+                            <span className={styles.stepNum}>{i + 1}</span>
+                            <span className={styles.stepText}>{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
         )}
-        <div className="px-3 py-2 rounded border text-sm">{status}</div>
+
+        {/* ── HINTS ────────────────────────────────────────── */}
+        {status === "idle" && !result.transcript && (
+          <div className={styles.hints}>
+            <p className={styles.hintsLabel}>💡 ลองพูดว่า...</p>
+            <div className={styles.hintRow}>
+              {EXAMPLE_MENUS.map((m) => (
+                <span key={m} className={styles.hintChip}>{m}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <footer className={styles.footer}>
+          Powered by Web Speech API · Next.js · n8n
+        </footer>
       </div>
-
-      <section className="mt-8 space-y-4">
-        <div className="p-4 rounded border">
-          <div className="font-semibold">ข้อความที่ถอดเสียง</div>
-          <div className="mt-2 text-sm">{result.transcript ?? "-"}</div>
-        </div>
-
-        <div className="p-4 rounded border">
-          <div className="font-semibold">คำตอบ</div>
-          <div className="mt-2 text-sm">{result.answer ?? "-"}</div>
-          {result.error && <div className="mt-2 text-sm text-red-600">{result.error}</div>}
-        </div>
-      </section>
-    </main>
+    </div>
   );
 }
