@@ -1,0 +1,181 @@
+{
+    "name": "ChefAI - Cooking Voice (Groq)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "cooking-voice",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "node-webhook",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                240,
+                300
+            ],
+            "webhookId": "cooking-voice"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.groq.com/openai/v1/chat/completions",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer PASTE_YOUR_GROQ_API_KEY_HERE"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"คุณคือผู้ช่วยสอนทำอาหารไทย เมื่อได้รับชื่ออาหาร ให้ตอบกลับเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอกจาก JSON:\\n{\\n  \\\"name\\\": \\\"ชื่ออาหารภาษาไทย\\\",\\n  \\\"ingredients\\\": [\\\"วัตถุดิบ 1\\\", \\\"วัตถุดิบ 2\\\"],\\n  \\\"steps\\\": [\\\"ขั้นตอน 1\\\", \\\"ขั้นตอน 2\\\"]\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.body.transcript }}\"\n    }\n  ],\n  \"temperature\": 0.3,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"max_tokens\": 1024\n}",
+                "options": {
+                    "timeout": 30000
+                }
+            },
+            "id": "node-groq",
+            "name": "Groq AI",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                480,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "language": "javaScript",
+                "jsCode": "// ── Parse Groq Response → RecipeAnswer ──────────────────────────────\nconst transcript = $('Webhook').first().json.body?.transcript || '';\n\nlet text = '';\ntry {\n  text = $input.first().json.choices[0].message.content;\n} catch {\n  return [{ json: { transcript, error: 'Groq ไม่ได้ส่งข้อมูลกลับมา' } }];\n}\n\nlet recipe;\ntry {\n  const clean = text.replace(/```json|```/g, '').trim();\n  recipe = JSON.parse(clean);\n} catch {\n  recipe = {\n    name: 'จาก AI',\n    ingredients: [],\n    steps: text.split(/\\n+/).map(s => s.trim()).filter(Boolean)\n  };\n}\n\nreturn [{\n  json: {\n    transcript,\n    source: 'n8n-groq',\n    answer: {\n      name: recipe.name || transcript,\n      ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients : [],\n      steps: Array.isArray(recipe.steps) ? recipe.steps : []\n    }\n  }\n}];"
+            },
+            "id": "node-parse",
+            "name": "Parse Recipe",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify($json) }}",
+                "options": {
+                    "responseHeaders": {
+                        "entries": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "name": "Access-Control-Allow-Origin",
+                                "value": "*"
+                            }
+                        ]
+                    }
+                }
+            },
+            "id": "node-respond",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                960,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={\n  \"transcript\": \"{{ $('Webhook').first().json.body.transcript }}\",\n  \"error\": \"Groq API error: {{ $json.message || 'Unknown error' }}\"\n}",
+                "options": {
+                    "responseCode": 502,
+                    "responseHeaders": {
+                        "entries": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "id": "node-error",
+            "name": "Error Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                480,
+                500
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Groq AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq AI": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Recipe",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ],
+            "error": [
+                [
+                    {
+                        "node": "Error Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Recipe": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "saveManualExecutions": true,
+        "callerPolicy": "workflowsFromSameOwner"
+    },
+    "staticData": null,
+    "tags": [
+        "cooking",
+        "AI",
+        "groq",
+        "voice"
+    ],
+    "triggerCount": 0,
+    "updatedAt": "2026-02-22T00:29:00.000Z",
+    "versionId": "1"
+}
